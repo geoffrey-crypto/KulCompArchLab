@@ -123,6 +123,24 @@ void SysTick_Handler(void){
 }
 
 int main(void) {
+
+
+	//KnopA
+	GPIOB->MODER &= ~GPIO_MODER_MODE13_Msk; // De knopA op pin13 van GPIOB wordt laag
+
+	//KnopB
+	GPIOB->MODER &= ~GPIO_MODER_MODE14_Msk; // De knopB op pin14 van GPIOB wordt laag
+
+
+
+	//pull up weerstand wordt hoog gezet voor pin13
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD13_Msk;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD13_0;
+
+	//pull up weerstand wordt hoog gezet voor pin14
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD14_Msk;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD14_0;
+
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 
@@ -184,7 +202,35 @@ int main(void) {
 
 
     while (1) {
+
+
+   if (!(GPIOB->IDR  & GPIO_IDR_ID13)) {
+
+    	minuten++;
+		if (minuten>60){
+			minuten = 0;
+		}
+
+
+    }
+
+
+    else if (!(GPIOB->IDR & GPIO_IDR_ID14)){
+    	uren++;
+		if (uren>24){
+    		uren = 0;
+    	}
+
+    }
+
+
+    else{
     	minuten++;
     	delay(1000);
     }
+
+
+    }
+
 }
+
