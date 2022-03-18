@@ -1,15 +1,22 @@
 #include <stdint.h>
 #include <stm32l4xx.h>
-// semih barmaksiz
+
 int mux = 0;
+int tick = 0;
+int uren = 0;
+int minuten = 0;
 
 void delay(unsigned int n){
-    volatile unsigned int delay = n;
-    while (delay--);
+	volatile unsigned int delay = n;
+	while (delay){
+		if (tick){
+			delay--;
+			tick = 0;
+		}
+	}
 }
 
 void clear(){
-	delay(5000);
 	GPIOA->ODR &= ~(GPIO_ODR_OD7 | GPIO_ODR_OD5);
 	GPIOB->ODR &= ~(GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15 | GPIO_ODR_OD1 | GPIO_ODR_OD2);
 }
@@ -58,133 +65,51 @@ void seg7(int n){
 	}
 }
 
-void multiplexer(int uren, int minuten){
-	while (mux == 0){
-		if (uren / 10 < 1){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 00
-			seg7(0);
-			clear();
+void SysTick_Handler(void){
+	tick++;
+	switch(mux & 0x3){
+	case 0:
+		clear();
+		GPIOA->ODR &= ~(GPIO_ODR_OD8);
+		GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 00
+		seg7(uren / 10);
+		break;
 
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 10
-			seg7(uren);
+	case 1:
+		if (uren >= 24){
 			clear();
-			mux++;
+			uren = 0;
 		}
-		else if (uren / 10 < 2){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 00
-			seg7(1);
+		else{
 			clear();
-
 			GPIOA->ODR |= (GPIO_ODR_OD8);
 			GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 10
 			seg7(uren % 10);
-			clear();
-			mux++;
 		}
+		break;
+
+	case 2:		clear();
+		GPIOA->ODR &= ~(GPIO_ODR_OD8);
+		GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
+		seg7((minuten / 10) % 10);
+		break;
+
+	case 3:
+		if (minuten >= 60){
+			clear();
+			minuten = 0;
+			uren ++;
+		}
+
 		else{
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 00
-			seg7(2);
 			clear();
-
 			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 10
-			seg7(uren % 10);
-			clear();
-			mux++;
+			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
+			seg7(minuten % 10);
 		}
+		break;
 	}
-
-	while (mux == 1){
-		if (minuten / 10 < 1){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-			seg7(0);
-			clear();
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(minuten);
-			clear();
-			mux--;
-		}
-		else if (minuten / 10 < 2){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-			seg7(1);
-			clear();
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(minuten % 10);
-			clear();
-			mux--;
-		}
-		else if (minuten / 10 < 3){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-			seg7(2);
-			clear();
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(minuten % 10);
-			clear();
-			mux--;//semih barmaksiz
-		}
-		else if (minuten / 10 < 4){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-			seg7(3);
-			clear();
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(minuten % 10);
-			clear();
-			mux--;
-		}
-		else if (minuten / 10 < 5){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-			seg7(4);
-			clear();
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(minuten % 10);
-			clear();
-			mux--;
-		}
-		else if (minuten / 10 < 6){
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-			seg7(5);
-			clear();
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(minuten % 10);
-			clear();
-			mux--;
-		}
-		else{
-			GPIOA->ODR &= ~(GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-			seg7(6);
-			clear();//semih barmaksiz
-
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(0);
-			clear();
-			mux--;
-		}
-	}
+	mux++;
 }
 
 int main(void) {
@@ -233,10 +158,19 @@ int main(void) {
 	GPIOA->MODER |= GPIO_MODER_MODE6_0;
 	GPIOA->OTYPER &= ~GPIO_OTYPER_OT6;
 
-    while (1) {
-    	int uren = 15;
-    	int minuten = 34;
+	// CPU Frequentie = 48 MHz
+	// Systick interrupt elke 1 ms (1kHz)  --> 48000000 Hz / 1000 Hz --> Reload = 48000
+	SysTick_Config(48000);
 
-    	multiplexer(uren,minuten);
+	// Interrupt aanzetten met een prioriteit van 128
+	NVIC_SetPriority(SysTick_IRQn, 128);
+	NVIC_EnableIRQ(SysTick_IRQn);
+
+
+
+
+    while (1) {
+    	minuten++;
+    	delay(1000);
     }
 }
