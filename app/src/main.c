@@ -169,6 +169,10 @@ int main(void) {
 
 
 
+
+
+
+
     while (1) {
     	minuten++;
     	delay(1000);
