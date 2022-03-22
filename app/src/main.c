@@ -124,6 +124,9 @@ void SysTick_Handler(void){
 
 int main(void) {
 
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+
 
 	//KnopA
 	GPIOB->MODER &= ~GPIO_MODER_MODE13_Msk; // De knopA op pin13 van GPIOB wordt laag
@@ -141,8 +144,6 @@ int main(void) {
 	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD14_Msk;
 	GPIOB->PUPDR |= GPIO_PUPDR_PUPD14_0;
 
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 
     //7seg leds
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
@@ -203,34 +204,32 @@ int main(void) {
 
     while (1) {
 
+    		minuten++;
 
-   if (!(GPIOB->IDR  & GPIO_IDR_ID13)) {
+    	    if (!(GPIOB->IDR & GPIO_IDR_ID14)){
+    	    	uren++;
+    			if (uren>23){
+    	    		uren = 0;
+    	    	}
 
-    	minuten++;
-		if (minuten>60){
-			minuten = 0;
-		}
+    	    }
 
+    	    else if (!(GPIOB->IDR  & GPIO_IDR_ID13)) {
 
-    }
-
-
-    else if (!(GPIOB->IDR & GPIO_IDR_ID14)){
-    	uren++;
-		if (uren>24){
-    		uren = 0;
-    	}
-
-    }
+     	    	minuten++;
+     			if (minuten>60){
+     				minuten = 0;
+     			}
 
 
-    else{
-    	minuten++;
-    	delay(1000);
-    }
+
+    	    }
+
+    	    delay(1000);
 
 
     }
+
 
 }
 
