@@ -2,72 +2,74 @@
 #include <stm32l4xx.h>
 
 int mux = 0;
-int tick = 0;
 int uren = 0;
 int minuten = 0;
-
-void delay(unsigned int n){
+int ms = 0;
+void delay(unsigned int n) {
 	volatile unsigned int delay = n;
-	while (delay){
-		if (tick){
-			delay--;
-			tick = 0;
-		}
+	while (delay--) {
+		;
 	}
 }
 
-void clear(){
+void clear() {
 	GPIOA->ODR &= ~(GPIO_ODR_OD7 | GPIO_ODR_OD5);
-	GPIOB->ODR &= ~(GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15 | GPIO_ODR_OD1 | GPIO_ODR_OD2);
+	GPIOB->ODR &= ~(GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15 | GPIO_ODR_OD1
+			| GPIO_ODR_OD2);
 }
 
-void seg7(int n){
-	switch (n){
-		case 0:
-			GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15 | GPIO_ODR_OD1);
-			break;
-		case 1:
-			GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
-			break;
-		case 2:
-			GPIOA->ODR |= (GPIO_ODR_OD7);
-			GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD2 | GPIO_ODR_OD15 | GPIO_ODR_OD12);
-			break;
-		case 3:
-			GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD2 | GPIO_ODR_OD12);
-			break;
-		case 4:
-			GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD1 | GPIO_ODR_OD2);
-			break;
-		case 5:
-			GPIOA->ODR |= (GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD1 | GPIO_ODR_OD2 | GPIO_ODR_OD12);
-			break;
-		case 6:
-			GPIOA->ODR |= (GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD1 | GPIO_ODR_OD15 | GPIO_ODR_OD12 | GPIO_ODR_OD2);
-			break;
-		case 7:
-			GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD0);
-			break;
-		case 8:
-			GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15 | GPIO_ODR_OD1 | GPIO_ODR_OD2);
-			break;
-		case 9:
-			GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
-			GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD1 | GPIO_ODR_OD2);
-			break;
+void seg7(int n) {
+	switch (n) {
+	case 0:
+		GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15
+				| GPIO_ODR_OD1);
+		break;
+	case 1:
+		GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
+		break;
+	case 2:
+		GPIOA->ODR |= (GPIO_ODR_OD7);
+		GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD2 | GPIO_ODR_OD15
+				| GPIO_ODR_OD12);
+		break;
+	case 3:
+		GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD2 | GPIO_ODR_OD12);
+		break;
+	case 4:
+		GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD1 | GPIO_ODR_OD2);
+		break;
+	case 5:
+		GPIOA->ODR |= (GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD1 | GPIO_ODR_OD2
+				| GPIO_ODR_OD12);
+		break;
+	case 6:
+		GPIOA->ODR |= (GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD1 | GPIO_ODR_OD15
+				| GPIO_ODR_OD12 | GPIO_ODR_OD2);
+		break;
+	case 7:
+		GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD0);
+		break;
+	case 8:
+		GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15
+				| GPIO_ODR_OD1 | GPIO_ODR_OD2);
+		break;
+	case 9:
+		GPIOA->ODR |= (GPIO_ODR_OD7 | GPIO_ODR_OD5);
+		GPIOB->ODR |= (GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD1
+				| GPIO_ODR_OD2);
+		break;
 	}
 }
 
-void SysTick_Handler(void){
-	tick++;
-	switch(mux){
+void SysTick_Handler(void) {
+	switch (mux) {
 	case 0:
 		clear();
 		GPIOA->ODR &= ~(GPIO_ODR_OD8);
@@ -77,47 +79,46 @@ void SysTick_Handler(void){
 		break;
 
 	case 1:
-		if (uren >= 24){
-			clear();
-			uren = 0;
-		}
-		else{
-			clear();
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR &= ~(GPIO_ODR_OD15);	// 10
-			seg7(uren % 10);
-		}
+
+		clear();
+		GPIOA->ODR |= (GPIO_ODR_OD8);
+		GPIOA->ODR &= ~(GPIO_ODR_OD15);	// 10
+		seg7(uren % 10);
 		GPIOA->ODR |= (GPIO_ODR_OD6);
 		break;
 
-	case 2:		clear();
+	case 2:
+		clear();
 		GPIOA->ODR &= ~(GPIO_ODR_OD8);
 		GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-		seg7((minuten / 10) % 10);
+		seg7(minuten / 10);
 		GPIOA->ODR &= ~(GPIO_ODR_OD6);
 		break;
 
 	case 3:
-		if (minuten >= 60){
-			clear();
-			minuten = 0;
-			uren ++;
-		}
 
-		else{
-			clear();
-			GPIOA->ODR |= (GPIO_ODR_OD8);
-			GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-			seg7(minuten % 10);
-		}
+		clear();
+		GPIOA->ODR |= (GPIO_ODR_OD8);
+		GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
+		seg7(minuten % 10);
 		GPIOA->ODR &= ~(GPIO_ODR_OD6);
 		break;
 	}
 	mux++;
+	ms++;
 
-
-
-	if (mux>3){
+	if (ms == 60000) {
+		ms = 0;
+		minuten++;
+		if (minuten >= 60) {
+			minuten = 0;
+			uren++;
+			if (uren >= 24) {
+				uren = 0;
+			}
+		}
+	}
+	if (mux > 3) {
 		mux = 0;
 	}
 }
@@ -127,14 +128,11 @@ int main(void) {
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 
-
 	//KnopA
 	GPIOB->MODER &= ~GPIO_MODER_MODE13_Msk; // De knopA op pin13 van GPIOB wordt laag
 
 	//KnopB
 	GPIOB->MODER &= ~GPIO_MODER_MODE14_Msk; // De knopB op pin14 van GPIOB wordt laag
-
-
 
 	//pull up weerstand wordt hoog gezet voor pin13
 	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD13_Msk;
@@ -144,8 +142,7 @@ int main(void) {
 	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD14_Msk;
 	GPIOB->PUPDR |= GPIO_PUPDR_PUPD14_0;
 
-
-    //7seg leds
+	//7seg leds
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
 	GPIOA->MODER |= GPIO_MODER_MODE7_0;
 	GPIOA->OTYPER &= ~GPIO_OTYPER_OT7;
@@ -195,41 +192,28 @@ int main(void) {
 	NVIC_SetPriority(SysTick_IRQn, 128);
 	NVIC_EnableIRQ(SysTick_IRQn);
 
+	while (1) {
 
+		if (!(GPIOB->IDR & GPIO_IDR_ID14)) {
+			uren++;
+			if (uren >= 24) {
+				uren = 0;
+			}
+			delay(1000000);
+		}
 
+		else if (!(GPIOB->IDR & GPIO_IDR_ID13)) {
 
+			minuten++;
+			if (minuten >= 60) {
+				minuten = 0;
+			}
 
+			delay(1000000);
 
+		}
 
-
-    while (1) {
-
-    		minuten++;
-
-    	    if (!(GPIOB->IDR & GPIO_IDR_ID14)){
-    	    	uren++;
-    			if (uren>23){
-    	    		uren = 0;
-    	    	}
-
-    	    }
-
-    	    else if (!(GPIOB->IDR  & GPIO_IDR_ID13)) {
-
-     	    	minuten++;
-     			if (minuten>60){
-     				minuten = 0;
-     			}
-
-
-
-    	    }
-
-    	    delay(1000);
-
-
-    }
-
+	}
 
 }
 
