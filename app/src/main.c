@@ -74,7 +74,7 @@ void SysTick_Handler(void) {
 		clear();
 		GPIOA->ODR &= ~(GPIO_ODR_OD8);
 		GPIOA->ODR &= ~(GPIO_ODR_OD15);		// 00
-		seg7(uren / 10);
+		seg7(temperatuur / 1000);
 		GPIOA->ODR &= ~(GPIO_ODR_OD6);
 		break;
 
@@ -83,7 +83,7 @@ void SysTick_Handler(void) {
 		clear();
 		GPIOA->ODR |= (GPIO_ODR_OD8);
 		GPIOA->ODR &= ~(GPIO_ODR_OD15);	// 10
-		seg7(uren % 10);
+		seg7((temperatuur / 100)%10);
 		GPIOA->ODR |= (GPIO_ODR_OD6);
 		break;
 
@@ -91,7 +91,7 @@ void SysTick_Handler(void) {
 		clear();
 		GPIOA->ODR &= ~(GPIO_ODR_OD8);
 		GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-		seg7(minuten / 10);
+		seg7((temperatuur%100)/10);
 		GPIOA->ODR &= ~(GPIO_ODR_OD6);
 		break;
 
@@ -100,7 +100,7 @@ void SysTick_Handler(void) {
 		clear();
 		GPIOA->ODR |= (GPIO_ODR_OD8);
 		GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-		seg7(minuten % 10);
+		seg7((temperatuur%100) % 10);
 		GPIOA->ODR &= ~(GPIO_ODR_OD6);
 		break;
 	}
@@ -132,7 +132,8 @@ int main(void) {
 
 	ADC1->CR |= ADC_CR_ADCAL;
 	while(ADC1->CR & ADC_CR_ADCAL);
-
+		ADC1->SMPR1 = (ADC_SMPR1_SMP6_0|ADC_SMPR1_SMP6_1|ADC_SMPR1_SMP6_2)
+		ADC1->SQR1 = (ADC_SQR1_SQ1_0|ADC_SQR1_SQ1_2);
 	//7seg leds
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
 	GPIOA->MODER |= GPIO_MODER_MODE7_0;
@@ -183,28 +184,7 @@ int main(void) {
 	NVIC_SetPriority(SysTick_IRQn, 128);
 	NVIC_EnableIRQ(SysTick_IRQn);
 
-	while (1) {
 
-		if (!(GPIOB->IDR & GPIO_IDR_ID14)) {
-			uren++;
-			if (uren >= 24) {
-				uren = 0;
-			}
-			delay(1000000);
-		}
-
-		else if (!(GPIOB->IDR & GPIO_IDR_ID13)) {
-
-			minuten++;
-			if (minuten >= 60) {
-				minuten = 0;
-			}
-
-			delay(1000000);
-
-		}
-
-	}
 
 }
 
