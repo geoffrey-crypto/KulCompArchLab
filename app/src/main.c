@@ -106,24 +106,7 @@ void SysTick_Handler(void) {
 	}
 	mux++;
 	ms++;
-
-	if (ms == 60000) {
-		ms = 0;
-		minuten++;
-		if (minuten >= 60) {
-			minuten = 0;
-			uren++;
-			if (uren >= 24) {
-				uren = 0;
-			}
-		}
-	}
-	if (mux > 3) {
-		mux = 0;
-	}
 }
-
-
 
 
 int main(void) {
@@ -131,19 +114,24 @@ int main(void) {
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 
-	//KnopA
-	GPIOB->MODER &= ~GPIO_MODER_MODE13_Msk; // De knopA op pin13 van GPIOB wordt laag
+	GPIOA->MODER |= GPIO_MODER_MODE0_0;
+	GPIOA->MODER |= GPIO_MODER_MODE0_0;
 
-	//KnopB
-	GPIOB->MODER &= ~GPIO_MODER_MODE14_Msk; // De knopB op pin14 van GPIOB wordt laag
+	RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
 
-	//pull up weerstand wordt hoog gezet voor pin13
-	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD13_Msk;
-	GPIOB->PUPDR |= GPIO_PUPDR_PUPD13_0;
+	RCC->CCIPR &= ~RCC_CCIPR_ADCSEL_Msk;
+	RCC->CCIPR |= RCC_CCIPR_ADCSEL_0 | RCC_CCIPR_ADCSEL_1;
 
-	//pull up weerstand wordt hoog gezet voor pin14
-	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD14_Msk;
-	GPIOB->PUPDR |= GPIO_PUPDR_PUPD14_0;
+	// Deep powerdown modus uitzetten
+	ADC1->CR &= ~ADC_CR_DEEPPWD;
+	// ADC voltage regulator aanzetten
+	ADC1->CR |= ADC_CR_ADVREGEN;
+
+	// Delay a few miliseconds, see datasheet for exact timing
+	delay(0.02);
+
+	ADC1->CR |= ADC_CR_ADCAL;
+	while(ADC1->CR & ADC_CR_ADCAL);
 
 	//7seg leds
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
