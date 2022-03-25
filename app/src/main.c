@@ -123,6 +123,9 @@ void SysTick_Handler(void) {
 	}
 }
 
+
+
+
 int main(void) {
 
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
