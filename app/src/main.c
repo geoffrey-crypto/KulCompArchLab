@@ -18,6 +18,9 @@ void clear() {
 			| GPIO_ODR_OD2);
 }
 
+
+
+
 void seg7(int n) {
 	switch (n) {
 	case 0:
