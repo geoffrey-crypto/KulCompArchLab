@@ -1,10 +1,16 @@
 #include <stdint.h>
 #include <stm32l4xx.h>
+#include <math.h>
 
 int mux = 0;
 int uren = 0;
 int minuten = 0;
 int ms = 0;
+float value;
+float V;
+float R;
+int temperatuur;
+
 void delay(unsigned int n) {
 	volatile unsigned int delay = n;
 	while (delay--) {
@@ -17,9 +23,6 @@ void clear() {
 	GPIOB->ODR &= ~(GPIO_ODR_OD0 | GPIO_ODR_OD12 | GPIO_ODR_OD15 | GPIO_ODR_OD1
 			| GPIO_ODR_OD2);
 }
-
-
-
 
 void seg7(int n) {
 	switch (n) {
@@ -86,7 +89,7 @@ void SysTick_Handler(void) {
 		clear();
 		GPIOA->ODR |= (GPIO_ODR_OD8);
 		GPIOA->ODR &= ~(GPIO_ODR_OD15);	// 10
-		seg7((temperatuur / 100)%10);
+		seg7((temperatuur / 100) % 10);
 		GPIOA->ODR |= (GPIO_ODR_OD6);
 		break;
 
@@ -94,7 +97,7 @@ void SysTick_Handler(void) {
 		clear();
 		GPIOA->ODR &= ~(GPIO_ODR_OD8);
 		GPIOA->ODR |= (GPIO_ODR_OD15);		// 01
-		seg7((temperatuur%100)/10);
+		seg7((temperatuur % 100) / 10);
 		GPIOA->ODR &= ~(GPIO_ODR_OD6);
 		break;
 
@@ -103,14 +106,13 @@ void SysTick_Handler(void) {
 		clear();
 		GPIOA->ODR |= (GPIO_ODR_OD8);
 		GPIOA->ODR |= (GPIO_ODR_OD15);		// 11
-		seg7((temperatuur%100) % 10);
+		seg7((temperatuur % 100) % 10);
 		GPIOA->ODR &= ~(GPIO_ODR_OD6);
 		break;
 	}
 	mux++;
 	ms++;
 }
-
 
 int main(void) {
 
@@ -137,14 +139,21 @@ int main(void) {
 	delay(0.02);
 
 	ADC1->CR |= ADC_CR_ADCAL;
-	while(ADC1->CR & ADC_CR_ADCAL);
+	while (ADC1->CR & ADC_CR_ADCAL)
+		;
 
 	// ADC aanzetten
 	ADC1->CR |= ADC_CR_ADEN;
 
 	// Kanalen instellen
-	ADC1->SMPR1 = (ADC_SMPR1_SMP6_0|ADC_SMPR1_SMP6_1|ADC_SMPR1_SMP6_2)	//Hoogste frequentie 111
-	ADC1->SQR1 = (ADC_SQR1_SQ1_0|ADC_SQR1_SQ1_2); 	//Kanaal 5 => 101
+	ADC1->SMPR1 |= (ADC_SMPR1_SMP6_0 | ADC_SMPR1_SMP6_1 | ADC_SMPR1_SMP6_2);	//Hoogste frequentie 111
+	ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
+	ADC1->SQR1 |= (ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_2); 	//Kanaal 5 => 101
+
+	//NTC
+	GPIOA->MODER &= ~GPIO_MODER_MODE0_Msk;// port mode register mask van GPIOA pin 0 laag zetten
+	GPIOA->MODER |= GPIO_MODER_MODE0_0 | GPIO_MODER_MODE0_1;//register poort modus van GPIOA pin 0 op 11 zetten -> analog mode
+
 	//7seg leds
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
 	GPIOA->MODER |= GPIO_MODER_MODE7_0;
@@ -195,7 +204,19 @@ int main(void) {
 	NVIC_SetPriority(SysTick_IRQn, 128);
 	NVIC_EnableIRQ(SysTick_IRQn);
 
+	while (1) {
+		// Start de ADC en wacht tot de sequentie klaar is
+		ADC1->CR |= ADC_CR_ADSTART;
+		while (!(ADC1->ISR & ADC_ISR_EOS));
 
+		// Lees de waarde in
+		value = ADC1->DR;
+		V = (value * 3.0f) / 4096.0f;
+		R = (10000.0f * V) / (3.0f - V);
+		temperatuur = 10* ((1.0f / ((logf(R / 10000.0f) / 3936.0f) + (1.0f / 298.15f)))- 273.15f);
+		delay(200);
+
+	}
 
 }
 
