@@ -9,6 +9,8 @@ float waarde;
 float V;
 float R;
 int temperatuur;
+int input_pot;
+
 
 void delay(unsigned int n) {
 	volatile unsigned int delay = n;
@@ -111,7 +113,7 @@ void SysTick_Handler(void) {
 	}
 	mux++;
 
-	if (mux > 3){
+	if (mux > 3) {
 		mux = 0;
 	}
 }
@@ -121,6 +123,10 @@ int main(void) {
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
 
+	//Potmeter
+	GPIOA->MODER &= ~GPIO_MODER_MODE1_Msk; //NTC configureren naar Analog
+	GPIOA->MODER |= GPIO_MODER_MODE1_0;
+	GPIOA->MODER |= GPIO_MODER_MODE1_1;
 
 	//klok aanzetten
 	RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
@@ -135,22 +141,22 @@ int main(void) {
 	ADC1->CR |= ADC_CR_ADVREGEN;
 
 	// Delay a few miliseconds, see datasheet for exact timing
-	delay(0.02);
+	delay(1500);
 
 	ADC1->CR |= ADC_CR_ADCAL;
-	while (ADC1->CR & ADC_CR_ADCAL);
+	while (ADC1->CR & ADC_CR_ADCAL)
+		;
 
 	// ADC aanzetten
 	ADC1->CR |= ADC_CR_ADEN;
 
-	// Kanalen instellen
-	ADC1->SMPR1 |= (ADC_SMPR1_SMP5_0 | ADC_SMPR1_SMP5_1 | ADC_SMPR1_SMP5_2);	//Hoogste frequentie 111
-	ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
-	ADC1->SQR1 |= (ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_2); 	//Kanaal 5 => 101
+	// Kanalen instellen NTC
+	ADC1->SMPR1 |= (ADC_SMPR1_SMP5_0 | ADC_SMPR1_SMP5_1 | ADC_SMPR1_SMP5_2);//Hoogste frequentie 111
+	ADC1->SMPR1 |= (ADC_SMPR1_SMP6_0 | ADC_SMPR1_SMP6_1 | ADC_SMPR1_SMP6_2);//Hoogste frequentie 111
 
 	//NTC
-	GPIOA->MODER &= ~GPIO_MODER_MODE0_Msk;// port mode register mask van GPIOA pin 0 laag zetten
-	GPIOA->MODER |= GPIO_MODER_MODE0_0 | GPIO_MODER_MODE0_1;//register poort modus van GPIOA pin 0 op 11 zetten -> analog mode
+	GPIOA->MODER &= ~GPIO_MODER_MODE0_Msk; // port mode register mask van GPIOA pin 0 laag zetten
+	GPIOA->MODER |= GPIO_MODER_MODE0_0 | GPIO_MODER_MODE0_1; //register poort modus van GPIOA pin 0 op 11 zetten -> analog mode
 
 	//7seg leds
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_Msk;
@@ -202,20 +208,67 @@ int main(void) {
 	NVIC_SetPriority(SysTick_IRQn, 128);
 	NVIC_EnableIRQ(SysTick_IRQn);
 
+	// TIMER
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+	RCC->APB2ENR |= RCC_APB2ENR_TIM16EN;
+
+	GPIOB->MODER &= ~GPIO_MODER_MODE8_Msk;
+	GPIOB->MODER |= GPIO_MODER_MODE8_1;
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT8;
+	GPIOB->AFR[1] = (GPIOB->AFR[1] & (~GPIO_AFRH_AFSEL8_Msk))
+			| (0xE << GPIO_AFRH_AFSEL8_Pos);
+
+	TIM16->PSC = 0;
+	TIM16->ARR = 24000;
+	TIM16->CCR1 = 12000;
+
+	while (1) {
+		//reset kanalen
+		ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
+
+		ADC1->SQR1 |= (ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_2); 	//Kanaal 6 => 101
+
+		// Start de ADC en wacht tot de sequentie klaar is
+		ADC1->CR |= ADC_CR_ADSTART;
+
+
+		while (!(ADC1->ISR & ADC_ISR_EOC))
+			;
+
+		// Lees de waarde in
+		waarde = ADC1->DR;
+
+		V = (waarde * 3.0f) / 4096.0f;
+		R = (10000.0f * V) / (3.0f - V);
+		temperatuur = 10* ((1.0f / ((logf(R / 10000.0f) / 3936.0f) + (1.0f / 298.15f)))- 273.15f);
+		delay(200);
+
+		TIM16->CCMR1 &= ~TIM_CCMR1_CC1S;
+		TIM16->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1FE;
+		TIM16->CCER |= TIM_CCER_CC1E;
+		TIM16->CCER &= ~TIM_CCER_CC1P;
+
+		//reset kanalen
+		ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
 
 
 
-    while (1) {
-    	// Start de ADC en wacht tot de sequentie klaar is
-    	ADC1->CR |= ADC_CR_ADSTART;
-    	while(!(ADC1->ISR & ADC_ISR_EOS));
+		// Kanalen instellen POT
+		ADC1->SQR1 = ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2;
 
-    	// Lees de waarde in
-    	waarde = ADC1->DR;
-    	V = (waarde*3.0f)/4096.0f;
-    	R = (10000.0f*V)/(3.0f-V);
-    	temperatuur = 10*((1.0f/((logf(R/10000.0f)/3936.0f)+(1.0f/298.15f)))-273.15f);
+		ADC1->CR |= ADC_CR_ADSTART;
+		while (!(ADC1->ISR & ADC_ISR_EOC))
+			;
+		input_pot = ADC1->DR;
 
-    	delay(200);
-    }
+		if (temperatuur > input_pot) {
+			TIM16->BDTR |= TIM_BDTR_MOE;
+			TIM16->CR1 |= TIM_CR1_CEN;
+
+		} else {
+			TIM16->BDTR &= ~TIM_BDTR_MOE;
+			TIM16->CR1 &= ~TIM_CR1_CEN;
+		}
+
+	}
 }
