@@ -203,6 +203,8 @@ int main(void) {
 	NVIC_EnableIRQ(SysTick_IRQn);
 
 
+
+
     while (1) {
     	// Start de ADC en wacht tot de sequentie klaar is
     	ADC1->CR |= ADC_CR_ADSTART;
