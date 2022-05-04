@@ -287,10 +287,12 @@ int main(void) {
 				;
 			// Lees de waarde in
 			waarde = ADC1->DR;
+
 			V = (waarde * 3.0f) / 4096.0f;
 			R = (10000.0f * V) / (3.0f - V);
 			temperatuur = 10 * ((1.0f / ((logf(R / 10000.0f) / 3936.0f)+ (1.0f / 298.15f))) - 273.15f);
 			delay(200);
+
 			//reset kanalen
 			ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
 			// Kanalen instellen POT
@@ -299,6 +301,7 @@ int main(void) {
 			while (!(ADC1->ISR & ADC_ISR_EOC))
 			;
 			input_pot = ADC1->DR;
+
 			i++;
 		}
 
