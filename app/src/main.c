@@ -4,13 +4,13 @@
 int mux = 0;
 int uren = 0;
 int minuten = 0;
+int i = 0;
 
 float waarde;
 float V;
 float R;
 int temperatuur;
 int input_pot;
-
 
 void delay(unsigned int n) {
 	volatile unsigned int delay = n;
@@ -150,9 +150,9 @@ int main(void) {
 	// ADC aanzetten
 	ADC1->CR |= ADC_CR_ADEN;
 
-	// Kanalen instellen NTC
-	ADC1->SMPR1 |= (ADC_SMPR1_SMP5_0 | ADC_SMPR1_SMP5_1 | ADC_SMPR1_SMP5_2);//Hoogste frequentie 111
-	ADC1->SMPR1 |= (ADC_SMPR1_SMP6_0 | ADC_SMPR1_SMP6_1 | ADC_SMPR1_SMP6_2);//Hoogste frequentie 111
+	// Kanalen instellen NTC en POT
+	ADC1->SMPR1 |= (ADC_SMPR1_SMP5_0 | ADC_SMPR1_SMP5_1 | ADC_SMPR1_SMP5_2); //Hoogste frequentie 111
+	ADC1->SMPR1 |= (ADC_SMPR1_SMP6_0 | ADC_SMPR1_SMP6_1 | ADC_SMPR1_SMP6_2); //Hoogste frequentie 111
 
 	//NTC
 	GPIOA->MODER &= ~GPIO_MODER_MODE0_Msk; // port mode register mask van GPIOA pin 0 laag zetten
@@ -224,13 +224,13 @@ int main(void) {
 
 	while (1) {
 		//reset kanalen
-		ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
-
+		ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2
+				| ADC_SQR1_SQ1_3);
+		// Kanalen instellen NTC
 		ADC1->SQR1 |= (ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_2); 	//Kanaal 6 => 101
 
 		// Start de ADC en wacht tot de sequentie klaar is
 		ADC1->CR |= ADC_CR_ADSTART;
-
 
 		while (!(ADC1->ISR & ADC_ISR_EOC))
 			;
@@ -240,7 +240,7 @@ int main(void) {
 
 		V = (waarde * 3.0f) / 4096.0f;
 		R = (10000.0f * V) / (3.0f - V);
-		temperatuur = 10* ((1.0f / ((logf(R / 10000.0f) / 3936.0f) + (1.0f / 298.15f)))- 273.15f);
+		temperatuur = 10 * ((1.0f / ((logf(R / 10000.0f) / 3936.0f) + (1.0f / 298.15f))) - 273.15f);
 		delay(200);
 
 		TIM16->CCMR1 &= ~TIM_CCMR1_CC1S;
@@ -249,26 +249,61 @@ int main(void) {
 		TIM16->CCER &= ~TIM_CCER_CC1P;
 
 		//reset kanalen
-		ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
-
-
+		ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2
+				| ADC_SQR1_SQ1_3);
 
 		// Kanalen instellen POT
-		ADC1->SQR1 = ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2;
+		ADC1->SQR1 = (ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2);
 
 		ADC1->CR |= ADC_CR_ADSTART;
 		while (!(ADC1->ISR & ADC_ISR_EOC))
 			;
 		input_pot = ADC1->DR;
 
-		if (temperatuur > input_pot) {
+		while (temperatuur > input_pot / 10) {
 			TIM16->BDTR |= TIM_BDTR_MOE;
 			TIM16->CR1 |= TIM_CR1_CEN;
+			if (i < 500) {
+				TIM16->ARR = 24000;
+				TIM16->CCR1 = 12000;
+				delay(10);
+			} else if (i < 1000) {
+				TIM16->ARR = 48000;
+				TIM16->CCR1 = 24000;
+				delay(10);
+			}
 
-		} else {
-			TIM16->BDTR &= ~TIM_BDTR_MOE;
-			TIM16->CR1 &= ~TIM_CR1_CEN;
+			else {
+				i = 0;
+			}
+
+			//reset kanalen
+			ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
+			// Kanalen instellen NTC
+			ADC1->SQR1 |= (ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_2);
+			// Start de ADC en wacht tot de sequentie klaar is
+			ADC1->CR |= ADC_CR_ADSTART;
+			while (!(ADC1->ISR & ADC_ISR_EOC))
+				;
+			// Lees de waarde in
+			waarde = ADC1->DR;
+			V = (waarde * 3.0f) / 4096.0f;
+			R = (10000.0f * V) / (3.0f - V);
+			temperatuur = 10 * ((1.0f / ((logf(R / 10000.0f) / 3936.0f)+ (1.0f / 298.15f))) - 273.15f);
+			delay(200);
+			//reset kanalen
+			ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
+			// Kanalen instellen POT
+			ADC1->SQR1 = (ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2);
+			ADC1->CR |= ADC_CR_ADSTART;
+			while (!(ADC1->ISR & ADC_ISR_EOC))
+			;
+			input_pot = ADC1->DR;
+			i++;
 		}
+
+		TIM16->BDTR &= ~TIM_BDTR_MOE;
+		TIM16->CR1 &= ~TIM_CR1_CEN;
 
 	}
 }
