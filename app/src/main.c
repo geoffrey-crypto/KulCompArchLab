@@ -267,7 +267,8 @@ int main(void) {
 				TIM16->ARR = 24000;
 				TIM16->CCR1 = 12000;
 				delay(10);
-			} else if (i < 1000) {
+			}
+			else if (i < 1000) {
 				TIM16->ARR = 48000;
 				TIM16->CCR1 = 24000;
 				delay(10);
