@@ -5,7 +5,7 @@ int mux = 0;
 int uren = 0;
 int minuten = 0;
 int i = 0;
-
+int ms = 0;
 float waarde;
 float V;
 float R;
@@ -116,6 +116,13 @@ void SysTick_Handler(void) {
 		break;
 	}
 	mux++;
+	ms++;
+
+	if (ms == 1000) {
+		ms = 0;
+		t = temperatuur;
+		printf("%.1f\n\r",t/10);
+	}
 
 	if (mux > 3) {
 		mux = 0;
@@ -264,8 +271,6 @@ int main(void) {
 		R = (10000.0f * V) / (3.0f - V);
 		temperatuur = 10 * ((1.0f / ((logf(R / 10000.0f) / 3936.0f) + (1.0f / 298.15f))) - 273.15f);
 		delay(200);
-		t = temperatuur;
-		printf("%.1f\n\r",t/10);
 		//Instellen Timer, capture & compare
 		TIM16->CCMR1 &= ~TIM_CCMR1_CC1S;
 		TIM16->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1FE;
@@ -317,8 +322,7 @@ int main(void) {
 			R = (10000.0f * V) / (3.0f - V);
 			temperatuur = 10 * ((1.0f / ((logf(R / 10000.0f) / 3936.0f)+ (1.0f / 298.15f))) - 273.15f);
 			delay(200);
-			t = temperatuur;
-			printf("%.1f\n\r",t/10);
+
 
 			//reset kanalen
 			ADC1->SQR1 &= ~(ADC_SQR1_SQ1_0 | ADC_SQR1_SQ1_1 | ADC_SQR1_SQ1_2| ADC_SQR1_SQ1_3);
