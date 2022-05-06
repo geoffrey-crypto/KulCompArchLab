@@ -212,12 +212,12 @@ int main(void) {
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 	RCC->APB2ENR |= RCC_APB2ENR_TIM16EN;
 
+	//Configureren GPIO
 	GPIOB->MODER &= ~GPIO_MODER_MODE8_Msk;
 	GPIOB->MODER |= GPIO_MODER_MODE8_1;
 	GPIOB->OTYPER &= ~GPIO_OTYPER_OT8;
-	GPIOB->AFR[1] = (GPIOB->AFR[1] & (~GPIO_AFRH_AFSEL8_Msk))
-			| (0xE << GPIO_AFRH_AFSEL8_Pos);
-
+	GPIOB->AFR[1] = (GPIOB->AFR[1] & (~GPIO_AFRH_AFSEL8_Msk)) | (0xE << GPIO_AFRH_AFSEL8_Pos);
+	//Instellen Timer, hoofdteller
 	TIM16->PSC = 0;
 	TIM16->ARR = 24000;
 	TIM16->CCR1 = 12000;
@@ -243,6 +243,7 @@ int main(void) {
 		temperatuur = 10 * ((1.0f / ((logf(R / 10000.0f) / 3936.0f) + (1.0f / 298.15f))) - 273.15f);
 		delay(200);
 
+		//Instellen Timer, capture & compare
 		TIM16->CCMR1 &= ~TIM_CCMR1_CC1S;
 		TIM16->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1FE;
 		TIM16->CCER |= TIM_CCER_CC1E;
