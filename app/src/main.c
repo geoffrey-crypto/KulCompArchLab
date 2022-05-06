@@ -304,6 +304,7 @@ int main(void) {
 			;
 			input_pot = ADC1->DR;
 
+
 			i++;
 		}
 
