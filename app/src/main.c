@@ -118,6 +118,7 @@ void SysTick_Handler(void) {
 	mux++;
 	ms++;
 
+
 	if (ms == 1000) {
 		ms = 0;
 		t = temperatuur;
